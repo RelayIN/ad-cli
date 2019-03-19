@@ -1,0 +1,21 @@
+{
+  "name": "rshell-cli",
+  "version": "1.0.0",
+  "description": "Command line binaries for relay shell",
+  "main": "rshell.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "virk",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "copyfiles": "^2.1.0",
+    "cross-spawn": "^6.0.5",
+    "del": "^4.0.0",
+    "getopts": "^2.2.4",
+    "kleur": "^3.0.2",
+    "tsc-watch": "^2.1.2",
+    "nodemon": "^1.18.10"
+  }
+}
