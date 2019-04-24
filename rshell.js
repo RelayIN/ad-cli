@@ -4,11 +4,32 @@ const copyfiles = require('copyfiles')
 const spawn = require('cross-spawn')
 const del = require('del')
 const { mkdir } = require('fs')
-const { join } = require('path')
-const { cyan, yellow, green } = require('kleur')
+const { join, sep } = require('path')
+const { cyan, yellow, green, red } = require('kleur')
 
 const PROJECT_DIR = process.cwd()
 const PACKAGE_FILES = ['package.json', 'package-lock.json']
+
+const KNEX_CONFIG_BLOCK = `
+module.exports = {
+  client: 'pg',
+  connection: {
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'virk',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'relay_service',
+  },
+}
+`
+
+/**
+  The config for the migrations
+*/
+const MIGRATIONS_CONFIG = {
+  directory: join(PROJECT_DIR, 'database', 'migrations'),
+  extension: 'ts',
+  tableName: 'adonis_schema',
+}
 
 /**
  * Defaults if not defined inside `.adonisrc.json` file
@@ -26,12 +47,16 @@ const DEFAULTS = {
  * Optionally require a file. Missing file exceptions are not
  * raised
  */
-function optionalRequire (filePath) {
+function optionalRequire (filePath, onMissingModule) {
   try {
     return require(filePath)
   } catch (error) {
     if (['ENOENT', 'MODULE_NOT_FOUND'].indexOf(error.code) === -1) {
       throw error
+    }
+
+    if (typeof (onMissingModule) === 'function') {
+      onMissingModule(error)
     }
   }
 }
@@ -173,17 +198,123 @@ async function watchTypescript () {
   )
 }
 
+/**
+ * Builds the knex connection for running migrations
+ */
+function loadDb () {
+  require('ts-node').register()
+  const connectionConfig = optionalRequire(
+    join(PROJECT_DIR, 'database', 'migrations.js'),
+    () => {
+      console.log(red('Create `database/migrations.js` file and export connectionConfig from it'))
+      console.log(KNEX_CONFIG_BLOCK)
+      process.exit(1)
+    }
+  )
+
+  const knex = optionalRequire(
+    join(PROJECT_DIR, 'node_modules', 'knex'),
+    () => {
+      console.log(red('Install knex and pg as dependencies'))
+      process.exit(1)
+    }
+  )
+
+  return knex(connectionConfig)
+}
+
+/**
+ * Makes a new migration file
+ */
+function makeMigration (name) {
+  if (!name) {
+    console.log(red('Define migration file name'))
+    process.exit(1)
+    return
+  }
+
+  const db = loadDb()
+  db.migrate.make(name, MIGRATIONS_CONFIG).then((filePath) => {
+    console.log(green(`created: ${filePath.replace(`${PROJECT_DIR}${sep}`, '')}`))
+    db.destroy()
+    process.exit(0)
+  })
+  .catch((error) => {
+    console.log(red('migration:make error'))
+    console.log(error)
+    db.destroy()
+    process.exit(1)
+  })
+}
+
+/**
+ * Execute migrations
+ */
+function runMigrations () {
+  const db = loadDb()
+
+  db.migrate.latest(MIGRATIONS_CONFIG).then((response) => {
+    if (!response[1].length) {
+      console.log(cyan('Nothing to migrate'))
+    } else {
+      response[1].forEach((file) => {
+        console.log(green(`migrated: ${file.replace(`${PROJECT_DIR}${sep}`, '')}`))
+      })
+    }
+
+    db.destroy()
+    process.exit(0)
+  })
+  .catch((error) => {
+    console.log(red('migration:run error'))
+    console.log(error)
+    db.destroy()
+    process.exit(1)
+  })
+}
+
+
+/**
+ * Rollback migrations to a given batch
+ */
+function rollbackMigrations (all) {
+  const db = loadDb()
+
+  db.migrate.rollback(MIGRATIONS_CONFIG, all).then((response) => {
+    if (!response[1].length) {
+      console.log(cyan('At latest batch'))
+    } else {
+      response[1].forEach((file) => {
+        console.log(green(`rollback: ${file.replace(`${PROJECT_DIR}${sep}`, '')}`))
+      })
+    }
+
+    db.destroy()
+    process.exit(0)
+  })
+  .catch((error) => {
+    console.log(red('migration:rollback error'))
+    console.log(error)
+    db.destroy()
+    process.exit(1)
+  })
+}
+
 const command = options._[0]
 
 if (!command) {
   console.log('')
   console.log(yellow('Commands'))
-  console.log(`${cyan('dev')}        Start development server`)
-  console.log(`${cyan('compile')}    Compile for production`)
+  console.log(`${cyan('dev')}                   Start development server`)
+  console.log(`${cyan('compile')}               Compile for production`)
+  console.log(`${cyan('migration:make')}        Create a new migration file`)
+  console.log(`${cyan('migration:run')}         Run pending migrations`)
+  console.log(`${cyan('migration:rollback')}    Rollback to previous batch. Pass --all to rollback to first batch`)
 
   console.log('')
   console.log(yellow('Options'))
-  console.log(`${cyan('--clean')}    Do not run \`npm install\` inside compiled output`)
+  console.log(`${cyan('--clean')}               Do not run \`npm install\` inside compiled output`)
+  console.log(`${cyan('--all')}                 Rollback to first batch`)
   console.log('')
   return
 }
@@ -195,5 +326,20 @@ if (command === 'dev') {
 
 if (command === 'build') {
   compileTypescript(options.clean, options.verbose).catch(console.error)
+  return
+}
+
+if (command === 'migration:make') {
+  makeMigration(options._[1])
+  return
+}
+
+if (command === 'migration:run') {
+  runMigrations()
+  return
+}
+
+if (command === 'migration:rollback') {
+  rollbackMigrations(options.all)
   return
 }

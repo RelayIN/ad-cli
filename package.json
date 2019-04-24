@@ -4,7 +4,7 @@
   "description": "Command line binaries for relay shell",
   "main": "rshell.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "pack": "pkg rshell.js  --targets node10-macos-x64,node10-alpine,node10-linux"
   },
   "keywords": [],
   "author": "virk",
@@ -15,7 +15,11 @@
     "del": "^4.0.0",
     "getopts": "^2.2.4",
     "kleur": "^3.0.2",
-    "tsc-watch": "^2.1.2",
-    "nodemon": "^1.18.10"
+    "nodemon": "^1.18.10",
+    "ts-node": "^8.1.0",
+    "tsc-watch": "^2.1.2"
+  },
+  "devDependencies": {
+    "pkg": "^4.3.7"
   }
 }
