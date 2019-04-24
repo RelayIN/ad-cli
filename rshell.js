@@ -22,6 +22,8 @@ module.exports = {
 }
 `
 
+const KNEX_DEPS_BLOCK = 'npm i knex pg'
+
 /**
   The config for the migrations
 */
@@ -189,6 +191,7 @@ async function watchTypescript () {
   })
 
   watch.start(
+    '--noClear',
     '--project',
     '.',
     '--outDir',
@@ -212,10 +215,14 @@ function loadDb () {
     }
   )
 
+  connectionConfig.migrations = connectionConfig.migrations || {}
+  connectionConfig.migrations.stub = join(__dirname, 'migration-stub.js')
+
   const knex = optionalRequire(
     join(PROJECT_DIR, 'node_modules', 'knex'),
     () => {
       console.log(red('Install knex and pg as dependencies'))
+      console.log(KNEX_DEPS_BLOCK)
       process.exit(1)
     }
   )
