@@ -312,6 +312,12 @@ function rollbackMigrations (all) {
  * from github
  */
 function newProject (projectDir) {
+  if (!projectDir) {
+    console.log(red('Define project path'))
+    process.exit(1)
+    return
+  }
+
   projectDir = isAbsolute(projectDir) ? projectDir : join(process.cwd(), projectDir)
 
   console.log(cyan('bootstrapping new project'))
