@@ -4,7 +4,7 @@ const copyfiles = require('copyfiles')
 const spawn = require('cross-spawn')
 const del = require('del')
 const { mkdir } = require('fs')
-const { join, sep } = require('path')
+const { join, sep, isAbsolute } = require('path')
 const { cyan, yellow, green, red } = require('kleur')
 
 const PROJECT_DIR = process.cwd()
@@ -307,11 +307,31 @@ function rollbackMigrations (all) {
   })
 }
 
+/**
+ * Creates a new project by cloning the boilerplate
+ * from github
+ */
+function newProject (projectDir) {
+  projectDir = isAbsolute(projectDir) ? projectDir : join(process.cwd(), projectDir)
+
+  console.log(cyan('bootstrapping new project'))
+  spawn.sync('git', ['clone', 'git@github.com:RelayIN/node-boilerplate.git', projectDir], { stdio: 'inherit' })
+
+  process.chdir(projectDir)
+  console.log('npm install')
+  const result = spawn.sync('npm', ['i'], { stdio: 'inherit' })
+
+  console.log(cyan('  Running following commands to get started'))
+  console.log(`    cd ${projectDir}`)
+  console.log(`    rshell-macos dev`)
+}
+
 const command = options._[0]
 
 if (!command) {
   console.log('')
   console.log(yellow('Commands'))
+  console.log(`${cyan('new')}                   Create a new project`)
   console.log(`${cyan('dev')}                   Start development server`)
   console.log(`${cyan('compile')}               Compile for production`)
   console.log(`${cyan('migration:make')}        Create a new migration file`)
@@ -348,5 +368,10 @@ if (command === 'migration:run') {
 
 if (command === 'migration:rollback') {
   rollbackMigrations(options.all)
+  return
+}
+
+if (command === 'new') {
+  newProject(options._[1])
   return
 }
