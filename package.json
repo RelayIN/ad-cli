@@ -21,5 +21,8 @@
   },
   "devDependencies": {
     "pkg": "^4.3.7"
+  },
+  "pkg": {
+    "scripts": "./migration-stub.js"
   }
 }
