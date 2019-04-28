@@ -1,11 +1,12 @@
 {
-  "name": "rshell-cli",
+  "name": "rshell",
   "version": "1.0.0",
   "description": "Command line binaries for relay shell",
   "main": "rshell.js",
   "scripts": {
-    "pack": "pkg rshell.js  --targets node10-macos-x64,node10-alpine,node10-linux"
+    "pack": "pkg package.json  --targets node10-macos-x64,node10-alpine,node10-linux"
   },
+  "bin": "rshell.js",
   "keywords": [],
   "author": "virk",
   "license": "UNLICENSED",
@@ -23,6 +24,6 @@
     "pkg": "^4.3.7"
   },
   "pkg": {
-    "scripts": "./migration-stub.js"
+    "assets": "./migration-stub.js"
   }
 }

@@ -206,6 +206,7 @@ async function watchTypescript () {
  */
 function loadDb () {
   require('ts-node').register()
+
   const connectionConfig = optionalRequire(
     join(PROJECT_DIR, 'database', 'migrations.js'),
     () => {
