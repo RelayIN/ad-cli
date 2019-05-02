@@ -18,12 +18,14 @@
     "kleur": "^3.0.2",
     "nodemon": "^1.18.10",
     "ts-node": "^8.1.0",
-    "tsc-watch": "^2.1.2"
+    "tsc-watch": "^2.1.2",
+    "typescript": "^3.4.5"
   },
   "devDependencies": {
     "pkg": "^4.3.7"
   },
   "pkg": {
-    "assets": "./migration-stub.js"
+    "assets": "./migration-stub.js",
+    "scripts": "typescript"
   }
 }
