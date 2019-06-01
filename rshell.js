@@ -42,7 +42,7 @@ const DEFAULTS = {
     ignore: ['*.spec.js'],
     delay: 0
   },
-  metaFiles: ['.adonisrc.json', '.env']
+  copyToBuild: ['.adonisrc.json', '.env']
 }
 
 /**
@@ -152,7 +152,7 @@ async function compileTypescript (clean, verbose) {
 
   await del([artifacts.buildDir])
   await ensureBuildDir(artifacts.buildDir)
-  await copyMetaFiles(artifacts.metaFiles, artifacts.buildDir, true)
+  await copyMetaFiles(artifacts.copyToBuild, artifacts.buildDir, true)
   runTsc(artifacts.buildDir, verbose)
 
   if (!clean) {
@@ -174,7 +174,7 @@ async function watchTypescript () {
 
   await del([artifacts.buildDir])
   await ensureBuildDir(artifacts.buildDir)
-  await copyMetaFiles(artifacts.metaFiles, artifacts.buildDir, false)
+  await copyMetaFiles(artifacts.copyToBuild, artifacts.buildDir, false)
 
   watch.on('first_success', () => {
     artifacts.nodemon.script = join(PROJECT_DIR, artifacts.nodemon.script)
@@ -197,7 +197,7 @@ async function watchTypescript () {
     '--outDir',
     artifacts.buildDir,
     '--compiler',
-    join(PROJECT_DIR, './node_modules/.bin/tsc')
+    join(PROJECT_DIR, './node_modules/.bin/ttsc')
   )
 }
 
